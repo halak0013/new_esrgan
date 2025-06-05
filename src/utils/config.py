@@ -6,11 +6,13 @@ from albumentations.pytorch import ToTensorV2
 LOAD_MODEL = False
 SAVE_MODEL = True
 
+SCHEDULER_TYPE = "reduce_on_plateau"
+
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 LEARNING_RATE = 1e-4
 LAMBDA_GP = 10
 NUM_WORKERS = 12
-NUM_EPOCHS = 5
+NUM_EPOCHS = 15
 
 BATCH_SIZE = 32
 HIGH_RES = 128

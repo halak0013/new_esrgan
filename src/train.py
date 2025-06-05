@@ -17,6 +17,7 @@ from src.utils.loss import VGGLoss
 from src.esrgan.model import Generator, Discriminator, initialize_weights
 from src.utils.utils import seed_torch
 from src.utils.data_loaders import get_loaders
+from src.utils import scheduler_select
 
 torch.backends.cudnn.benchmark = True
 import time
@@ -171,6 +172,15 @@ def train():
 
     opt_gen = optim.Adam(gen.parameters(), lr=cfg.LEARNING_RATE, betas=(0.0, 0.9))
     opt_disc = optim.Adam(disc.parameters(), lr=cfg.LEARNING_RATE, betas=(0.0, 0.9))
+    
+    scheduler_params = scheduler_select.scheduler_params_dict[cfg.SCHEDULER_TYPE]
+
+    gen_scheduler = scheduler_select.get_scheduler(
+        opt_gen, cfg.SCHEDULER_TYPE, scheduler_params
+    )
+    disc_scheduler = scheduler_select.get_scheduler(
+        opt_disc, cfg.SCHEDULER_TYPE, scheduler_params
+    )
 
     writer = SummaryWriter(cfg.SAVE_PATH)
     tb_step = 0
@@ -212,6 +222,13 @@ def train():
             tb_step,
             epoch,
         )
+
+        if cfg.SCHEDULER_TYPE == "reduce_on_plateau":
+            gen_scheduler.step(loss_gen)
+            disc_scheduler.step(loss_critic)
+        else:
+            gen_scheduler.step()
+            disc_scheduler.step()
 
         val_psnr, val_ssim = validate(gen, val_loader)
 

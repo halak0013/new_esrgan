@@ -11,8 +11,8 @@ class NatureDataset(Dataset):
         ds_dict = load_dataset(
             "mertcobanov/nature-dataset", cache_dir=cfg.CACHE_DIR
         )
-        train_ratio=0.14 # 7
-        val_ratio=0.02  # 1
+        train_ratio=0.7 # 7
+        val_ratio=0.1 # 1
         full_ds = ds_dict["train"]  # Tüm veri burada
         total = len(full_ds)
         train_end = int(total * train_ratio)
