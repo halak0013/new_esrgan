@@ -88,7 +88,6 @@ def get_scheduler(optimizer, scheduler_type, params, steps_per_epoch=None):
             mode=params.get("mode", "min"),
             factor=params.get("factor", 0.5),
             patience=params.get("patience", 3),
-            verbose=params.get("verbose", True),
             min_lr=params.get("min_lr", 1e-6)
         )
     
