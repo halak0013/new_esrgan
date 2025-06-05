@@ -1,0 +1,2 @@
+experiment,time,psnr,ssim,loss_critic,loss_generator
+7_first_experiment,00:16:50,11.103890439714435,0.34202152,1.099349385527171,0.13599239425844253
