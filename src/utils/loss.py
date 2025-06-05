@@ -22,7 +22,7 @@ class VGGLoss(nn.Module):
 
         # VGG'yi compile edin (PyTorch 2.0+)
         # if hasattr(torch, 'compile'):
-        #     self.vgg = torch.compile(self.vgg)
+        #     self.vgg = torch.compile(self.vgg, mode="reduce-overhead")
 
     def forward(self, input, target):
         vgg_input_features = self.vgg(input)

@@ -98,7 +98,8 @@ def train_fn(
 
         loss_critics.append(loss_critic.item())
         loss_gens.append(gen_loss.item())
-        del high_res, low_res, fake, critic_real, critic_fake, loss_critic, gen_loss, gp
+        del high_res, low_res, fake, critic_real, critic_fake
+        del loss_critic, gen_loss, gp
         # torch.cuda.empty_cache()
 
         if idx % len_loop2 == 0 and idx > 0:
@@ -158,9 +159,15 @@ def train():
     initialize_weights(gen)
 
     # Model compilation ekleyin (PyTorch 2.0+)
+    # balanced_options = {
+    #     "triton.cudagraphs": False,  # Memory safety
+    #     "epilogue_fusion": True,  # Performance boost
+    #     "shape_padding": True,  # Tensor cores
+    #     "memory_planning": True,  # Memory efficiency
+    # }
     # if hasattr(torch, "compile"):
-    #     gen = torch.compile(gen, mode="reduce-overhead")
-    #     disc = torch.compile(disc, mode="reduce-overhead")
+    #     gen = torch.compile(gen, options=balanced_options)
+    #     disc = torch.compile(disc, options=balanced_options))
 
     opt_gen = optim.Adam(gen.parameters(), lr=cfg.LEARNING_RATE, betas=(0.0, 0.9))
     opt_disc = optim.Adam(disc.parameters(), lr=cfg.LEARNING_RATE, betas=(0.0, 0.9))

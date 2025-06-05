@@ -20,7 +20,7 @@ IMG_CHANNELS = 3
 with open("data/version", "r") as f:
     VERSION = f.read().strip()
 
-NAME = "model_compile"
+NAME = "normal"
 TEST_IMAGE_DIR = "test_images"
 SAVED_DIR = "saved"
 LOG_DIR = "logs"
