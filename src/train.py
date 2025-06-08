@@ -42,12 +42,12 @@ def train_fn(
     print(len_loop2)
     loss_critics = []
     loss_gens = []
+
     for idx, (low_res, high_res) in enumerate(loop):
         high_res = high_res.to(cfg.DEVICE)
         low_res = low_res.to(cfg.DEVICE)
 
-        # Train Discriminator: max log(D(x)) + log(1 - D(G(z)))
-        # amp.autocast hesaplamayı f32/16 karmaşık yapıp optimize
+        # Train Discriminator
         with torch.amp.autocast(cfg.DEVICE):
             fake = gen(low_res)
             critic_real = disc(high_res)
@@ -59,56 +59,95 @@ def train_fn(
                 + cfg.LAMBDA_GP * gp
             )
 
+            # NaN/Inf kontrolü ekle
+            if torch.isnan(loss_critic) or torch.isinf(loss_critic):
+                print(
+                    f"Warning: NaN/Inf detected in critic loss at epoch {epoch}, step {idx}"
+                )
+                print(f"critic_real mean: {torch.mean(critic_real):.4f}")
+                print(f"critic_fake mean: {torch.mean(critic_fake):.4f}")
+                print(f"gradient penalty: {gp:.4f}")
+                continue
+
         opt_disc.zero_grad()
         d_scaler.scale(loss_critic).backward()
+
+        # Gradient clipping ekle
+        d_scaler.unscale_(opt_disc)
+        torch.nn.utils.clip_grad_norm_(disc.parameters(), max_norm=1.0)
+
         d_scaler.step(opt_disc)
         d_scaler.update()
 
-        # Train Generator: min log(1 - D(G(z))) <-> max log(D(G(z))
+        # Train Generator
         with torch.amp.autocast(cfg.DEVICE):
             l1_loss = 1e-2 * l1(fake, high_res)
             adversarial_loss = 5e-3 * -torch.mean(disc(fake))
             loss_for_vgg = vgg_loss(fake, high_res)
             gen_loss = l1_loss + loss_for_vgg + adversarial_loss
 
+            # NaN/Inf kontrolü ekle
+            if torch.isnan(gen_loss) or torch.isinf(gen_loss):
+                print(
+                    f"Warning: NaN/Inf detected in generator loss at epoch {epoch}, step {idx}"
+                )
+                print(f"L1 loss: {l1_loss:.4f}")
+                print(f"VGG loss: {loss_for_vgg:.4f}")
+                print(f"Adversarial loss: {adversarial_loss:.4f}")
+                continue
+
         opt_gen.zero_grad()
         g_scaler.scale(gen_loss).backward()
+
+        # Gradient clipping ekle
+        g_scaler.unscale_(opt_gen)
+        torch.nn.utils.clip_grad_norm_(gen.parameters(), max_norm=1.0)
+
         g_scaler.step(opt_gen)
         g_scaler.update()
 
-        writer.add_scalar("Critic loss", loss_critic.item(), global_step=tb_step)
-        writer.add_scalar("Generator loss", gen_loss.item(), global_step=tb_step)
-        writer.add_scalar("L1 loss", l1_loss.item(), global_step=tb_step)
-        writer.add_scalar("VGG loss", loss_for_vgg.item(), global_step=tb_step)
-        writer.add_scalar(
-            "Adversarial loss", adversarial_loss.item(), global_step=tb_step
-        )
-        writer.add_scalar("Gradient penalty", gp.item(), global_step=tb_step)
+        # Tensorboard logging - NaN kontrolü ile
+        if not (torch.isnan(loss_critic) or torch.isnan(gen_loss)):
+            writer.add_scalar("Critic loss", loss_critic.item(), global_step=tb_step)
+            writer.add_scalar("Generator loss", gen_loss.item(), global_step=tb_step)
+            writer.add_scalar("L1 loss", l1_loss.item(), global_step=tb_step)
+            writer.add_scalar("VGG loss", loss_for_vgg.item(), global_step=tb_step)
+            writer.add_scalar(
+                "Adversarial loss", adversarial_loss.item(), global_step=tb_step
+            )
+            writer.add_scalar("Gradient penalty", gp.item(), global_step=tb_step)
+
         writer.add_scalar(
             "Learning rate", opt_gen.param_groups[0]["lr"], global_step=tb_step
         )
         tb_step += 1
 
-        loop.set_postfix(
-            gp=gp.item(),
-            critic=loss_critic.item(),
-            l1=l1_loss.item(),
-            vgg=loss_for_vgg.item(),
-            adversarial=adversarial_loss.item(),
-        )
+        # Progress bar update - NaN kontrolü ile
+        if not (torch.isnan(loss_critic) or torch.isnan(gen_loss)):
+            loop.set_postfix(
+                gp=gp.item(),
+                critic=loss_critic.item(),
+                l1=l1_loss.item(),
+                vgg=loss_for_vgg.item(),
+                adversarial=adversarial_loss.item(),
+            )
 
-        loss_critics.append(loss_critic.item())
-        loss_gens.append(gen_loss.item())
+            loss_critics.append(loss_critic.item())
+            loss_gens.append(gen_loss.item())
+
         del high_res, low_res, fake, critic_real, critic_fake
         del loss_critic, gen_loss, gp
-        # torch.cuda.empty_cache()
 
         if idx % len_loop2 == 0 and idx > 0:
             plot_examples(
                 cfg.TEST_IMAGE_DIR, gen, ex=f"epoch_{epoch}_step_{2 - (len_loop2//idx)}"
             )
 
-    return tb_step, np.mean(loss_critics), np.mean(loss_gens)
+    return (
+        tb_step,
+        np.mean(loss_critics) if loss_critics else 0.0,
+        np.mean(loss_gens) if loss_gens else 0.0,
+    )
 
 
 def validate(gen, dataloader):
@@ -172,16 +211,22 @@ def train():
 
     opt_gen = optim.Adam(gen.parameters(), lr=cfg.LEARNING_RATE, betas=(0.0, 0.9))
     opt_disc = optim.Adam(disc.parameters(), lr=cfg.LEARNING_RATE, betas=(0.0, 0.9))
-    
+
     scheduler_params = scheduler_select.scheduler_params_dict[cfg.SCHEDULER_TYPE]
 
     if cfg.SCHEDULER_TYPE == "onecycle":
         steps_per_epoch = len(train_loader)
         gen_scheduler = scheduler_select.get_scheduler(
-            opt_gen, cfg.SCHEDULER_TYPE, scheduler_params, steps_per_epoch=steps_per_epoch
+            opt_gen,
+            cfg.SCHEDULER_TYPE,
+            scheduler_params,
+            steps_per_epoch=steps_per_epoch,
         )
         disc_scheduler = scheduler_select.get_scheduler(
-            opt_disc, cfg.SCHEDULER_TYPE, scheduler_params, steps_per_epoch=steps_per_epoch
+            opt_disc,
+            cfg.SCHEDULER_TYPE,
+            scheduler_params,
+            steps_per_epoch=steps_per_epoch,
         )
     else:
         gen_scheduler = scheduler_select.get_scheduler(
@@ -254,12 +299,8 @@ def train():
         if val_ssim > best_ssim or (val_ssim == best_ssim and val_psnr > best_psnr):
             best_psnr = val_psnr
             best_ssim = val_ssim
-            save_checkpoint(
-                gen, opt_gen, filename=f"{cfg.CHECKPOINT_GEN}_best.pth"
-            )
-            save_checkpoint(
-                disc, opt_disc, filename=f"{cfg.CHECKPOINT_DISC}_best.pth"
-            )
+            save_checkpoint(gen, opt_gen, filename=f"{cfg.CHECKPOINT_GEN}_best.pth")
+            save_checkpoint(disc, opt_disc, filename=f"{cfg.CHECKPOINT_DISC}_best.pth")
     elapsed = time.time() - initial_time
     hours = int(elapsed // 3600)
     minutes = int((elapsed % 3600) // 60)
