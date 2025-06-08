@@ -175,12 +175,21 @@ def train():
     
     scheduler_params = scheduler_select.scheduler_params_dict[cfg.SCHEDULER_TYPE]
 
-    gen_scheduler = scheduler_select.get_scheduler(
-        opt_gen, cfg.SCHEDULER_TYPE, scheduler_params
-    )
-    disc_scheduler = scheduler_select.get_scheduler(
-        opt_disc, cfg.SCHEDULER_TYPE, scheduler_params
-    )
+    if cfg.SCHEDULER_TYPE == "onecycle":
+        steps_per_epoch = len(train_loader)
+        gen_scheduler = scheduler_select.get_scheduler(
+            opt_gen, cfg.SCHEDULER_TYPE, scheduler_params, steps_per_epoch=steps_per_epoch
+        )
+        disc_scheduler = scheduler_select.get_scheduler(
+            opt_disc, cfg.SCHEDULER_TYPE, scheduler_params, steps_per_epoch=steps_per_epoch
+        )
+    else:
+        gen_scheduler = scheduler_select.get_scheduler(
+            opt_gen, cfg.SCHEDULER_TYPE, scheduler_params
+        )
+        disc_scheduler = scheduler_select.get_scheduler(
+            opt_disc, cfg.SCHEDULER_TYPE, scheduler_params
+        )
 
     writer = SummaryWriter(cfg.SAVE_PATH)
     tb_step = 0
@@ -205,6 +214,9 @@ def train():
             opt_disc,
             cfg.LEARNING_RATE,
         )
+
+    best_psnr = 0.0
+    best_ssim = 0.0
 
     for epoch in range(cfg.NUM_EPOCHS):
         print(f"Epoch {epoch + 1}/{cfg.NUM_EPOCHS}")
@@ -239,6 +251,15 @@ def train():
         if cfg.SAVE_MODEL:
             save_checkpoint(gen, opt_gen, filename=cfg.CHECKPOINT_GEN)
             save_checkpoint(disc, opt_disc, filename=cfg.CHECKPOINT_DISC)
+        if val_ssim > best_ssim or (val_ssim == best_ssim and val_psnr > best_psnr):
+            best_psnr = val_psnr
+            best_ssim = val_ssim
+            save_checkpoint(
+                gen, opt_gen, filename=f"{cfg.CHECKPOINT_GEN}_best.pth"
+            )
+            save_checkpoint(
+                disc, opt_disc, filename=f"{cfg.CHECKPOINT_DISC}_best.pth"
+            )
     elapsed = time.time() - initial_time
     hours = int(elapsed // 3600)
     minutes = int((elapsed % 3600) // 60)
