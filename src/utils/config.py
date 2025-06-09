@@ -6,13 +6,13 @@ from albumentations.pytorch import ToTensorV2
 LOAD_MODEL = False
 SAVE_MODEL = True
 
-SCHEDULER_TYPE = "reduce_on_plateau"
+SCHEDULER_TYPE = "gan_custom"
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 LEARNING_RATE = 1e-4
 LAMBDA_GP = 10
 NUM_WORKERS = 12
-NUM_EPOCHS = 15
+NUM_EPOCHS = 25
 
 BATCH_SIZE = 32
 HIGH_RES = 128
@@ -22,7 +22,9 @@ IMG_CHANNELS = 3
 with open("data/version", "r") as f:
     VERSION = f.read().strip()
 
-NAME = "normal"
+NAME = "Custom_new_dataset"
+DATASET_FROM_FOLDER = True  # If True, use NatureFromFolder dataset class
+DATASET_PATH = "data/nature_dataset"
 TEST_IMAGE_DIR = "test_images"
 SAVED_DIR = "saved"
 LOG_DIR = "logs"

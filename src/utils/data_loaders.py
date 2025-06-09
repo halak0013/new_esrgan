@@ -3,11 +3,18 @@ from torch.utils.data import DataLoader
 
 import src.utils.config as cfg
 from src.utils.dataset import NatureDataset
+from src.utils.dataset_from_folder import NatureFromFolder
 
-
-train_dataset = NatureDataset(type_="train")
-valid_dataset = NatureDataset(type_="val")
-test_dataset = NatureDataset(type_="test")
+from_folder = cfg.DATASET_FROM_FOLDER
+train_dataset = (
+    NatureDataset(type_="train") if not from_folder else NatureFromFolder(type_="train")
+)
+valid_dataset = (
+    NatureDataset(type_="val") if not from_folder else NatureFromFolder(type_="val")
+)
+test_dataset = (
+    NatureDataset(type_="test") if not from_folder else NatureFromFolder(type_="test")
+)
 
 
 train_loader = DataLoader(

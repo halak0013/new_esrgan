@@ -157,5 +157,6 @@ cython_debug/
 
 .vscode/
 data/cache/
+data/nature_dataset/
 logs/
 saved/
