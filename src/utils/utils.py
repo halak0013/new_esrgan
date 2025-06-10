@@ -27,7 +27,7 @@ def gradient_penalty(discriminator, real, fake):
         retain_graph=True,
     )[0]
     # Her görüntüyü vektörleştirir
-    gradient = gradient.flatten(start_dim=1) 
+    gradient = gradient.flatten(start_dim=1)
     # Her örneğin gradyan uzunluğunu hesaplar
     gradient_norm = gradient.norm(2, dim=1)
     # Normun 1’den sapmasına ceza verir
@@ -44,17 +44,18 @@ def save_checkpoint(model, optimizer, filename="my_checkpoint.pth.tar"):
     torch.save(checkpoint, filename)
 
 
-def load_checkpoint(checkpoint_file, model, optimizer, lr):
+def load_checkpoint(checkpoint_file, model, optimizer=None, lr=None):
     print("=> Loading checkpoint")
     checkpoint = torch.load(checkpoint_file, map_location=cfg.DEVICE)
     # model.load_state_dict(checkpoint)
     model.load_state_dict(checkpoint["state_dict"])
-    optimizer.load_state_dict(checkpoint["optimizer"])
 
     # If we don't do this then it will just have learning rate of old checkpoint
     # and it will lead to many hours of debugging \:
-    for param_group in optimizer.param_groups:
-        param_group["lr"] = lr
+    if lr is not None:
+        optimizer.load_state_dict(checkpoint["optimizer"])
+        for param_group in optimizer.param_groups:
+            param_group["lr"] = lr
 
 
 def plot_examples(low_res_folder, gen, ex):

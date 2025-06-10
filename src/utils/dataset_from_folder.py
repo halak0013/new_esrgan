@@ -15,7 +15,7 @@ class NatureFromFolder(Dataset):
         self.class_names = os.listdir(self.root_dir)
         print(self.class_names[:10])
 
-        for index, name in enumerate(self.class_names):
+        for name in self.class_names:
             files = os.path.join(self.root_dir, name)
             self.data.append(files)
         print(self.data[:10])
@@ -32,7 +32,10 @@ class NatureFromFolder(Dataset):
         elif type_ == "val":
             self.data = self.data[train_end:val_end]
         elif type_ == "test":
-            self.data = self.data[val_end:]
+            test_size = total - val_end
+            if test_size >= cfg.TEST_SIZE:
+                test_size = cfg.TEST_SIZE
+            self.data = self.data[val_end : val_end + test_size]
         else:
             raise ValueError("type_ must be 'train', 'val', or 'test'")
 

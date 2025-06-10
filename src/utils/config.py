@@ -13,6 +13,7 @@ LEARNING_RATE = 1e-4
 LAMBDA_GP = 10
 NUM_WORKERS = 12
 NUM_EPOCHS = 25
+TEST_SIZE = 1000
 
 BATCH_SIZE = 32
 HIGH_RES = 128
@@ -30,8 +31,12 @@ SAVED_DIR = "saved"
 LOG_DIR = "logs"
 DATA_SET_NAME_DIR = "esrgan_dataset"
 EXPERIMENT = VERSION + "_" + NAME
+
+
 def extension(mode_name: str) -> str:
     return mode_name + EXPERIMENT + VERSION + ".pth"
+
+
 SAVE_PATH = f"{LOG_DIR}/{DATA_SET_NAME_DIR}/{EXPERIMENT}"
 DATA = "data"
 CACHE_DIR = DATA + "/cache"
