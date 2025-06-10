@@ -78,6 +78,26 @@ Test için:
 python3 main.py test False
 ```
 
+README dosyanıza çıktı görselleri için uygun bir bölüm başlığı aşağıdaki şekilde ekleyebilirsiniz:
+
+---
+
+## 🖼️ Örnek Çıktılar
+
+Aşağıda modelin düşük çözünürlüklü girişlerden ürettiği yüksek çözünürlüklü çıktılara ait örnekler yer almaktadır:
+
+###  Örnek Çıktılar
+
+| Test Görüntüsü 1                 | Test Görüntüsü 2                 | Test Görüntüsü 3                  |
+| -------------------------------- | -------------------------------- | -------------------------------- |
+| ![k1](https://github.com/user-attachments/assets/ac433516-1f27-4318-8490-f87b52d1dc8e) | ![k2](https://github.com/user-attachments/assets/cfc05f17-2b7c-4a35-a56a-6e223e39a7aa) | ![k3](https://github.com/user-attachments/assets/df9b2ac2-1060-4e80-b128-64471668377b) |
+
+###  Tensor Board
+
+![ssim_psnr_vgg](https://github.com/user-attachments/assets/5efafb75-9410-46e9-8b6e-434025762732)
+
+---
+
 ## 👥 Katkıda Bulunanlar
 
 * **Muhammet Halak** 
