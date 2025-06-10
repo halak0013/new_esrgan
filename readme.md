@@ -27,7 +27,7 @@ Görüntü süper çözünürlük (Super-Resolution), düşük çözünürlükl�
 ## ⚙️ Eğitim Detayları
 
 - **Ortam:** Google Colab GPU + Yerel GPU
-- **Epoch:** 25 (ön denemeler dahil)
+- **Epoch:** 25 
 - **Batch Size:** 16
 - **Optimizer:** Adam
 - **Scheduler:** `gan_custom`, `lambdaLR`, `ReduceLROnPlateau` gibi farklı planlayıcılar test edilmiştir.
@@ -37,7 +37,7 @@ Görüntü süper çözünürlük (Super-Resolution), düşük çözünürlükl�
 
 | Model | PSNR | SSIM |
 |-------|------|------|
-| En iyi sonuç (Custom + Yeni Dataset) | **30.99** | **0.693** |
+| En iyi sonuç (Custom + Yeni Dataset) | **43.03** | **0.9841** |
 
 Tensorboard çıktıları, görsel karşılaştırmalar ve kayıpların detaylı analizi proje dosyalarında yer almaktadır.
 
@@ -45,17 +45,22 @@ Tensorboard çıktıları, görsel karşılaştırmalar ve kayıpların detaylı
 
 ```
 
-├── data/                   # Veri seti klasörü
-├── models/                 # ESRGAN model bileşenleri
-│   ├── generator.py
-│   ├── discriminator.py
-│   └── blocks.py
-├── utils/
-│   └── checkpoint.py       # Model kayıt/yükleme
-├── train.py                # Eğitim scripti
-├── test.py                 # Görüntü test scripti
-├── config.py               # Parametreler
-├── README.md
+├── main.py
+├── readme.md
+├── src
+│   ├── esrgan
+│   │   ├── model.py
+│   ├── test.py
+│   ├── train.py
+│   └── utils
+│       ├── config.py
+│       ├── data_loaders.py
+│       ├── dataset_from_folder.py
+│       ├── dataset.py
+│       ├── loss.py
+│       ├── scheduler_select.py
+│       └── utils.py
+└── test_images
 
 ````
 
@@ -64,14 +69,13 @@ Tensorboard çıktıları, görsel karşılaştırmalar ve kayıpların detaylı
 Projeyi çalıştırmak için:
 
 ```bash
-pip install -r requirements.txt
-python train.py
+python3 main.py train False
 ````
 
 Test için:
 
 ```bash
-python test.py --image "test_images/sample.jpg"
+python3 main.py test False
 ```
 
 ## 👥 Katkıda Bulunanlar
