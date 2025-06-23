@@ -1,4 +1,5 @@
-# ESRGAN ile Doğa Görüntüleri Netleştirme
+# New ESRGAN ile Doğa Görüntüleri Netleştirme
+[Türkçe](readme.md) | [English](readme_en.md)
 
 Bu proje, derin öğrenme tabanlı **ESRGAN (Enhanced Super-Resolution Generative Adversarial Network)** modeli kullanılarak düşük çözünürlüklü doğa görüntülerinin kalite artırımı üzerine gerçekleştirilmiştir.
 
